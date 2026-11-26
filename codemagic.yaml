@@ -10,9 +10,12 @@ workflows:
       - name: Build Unsigned IPA 16.0 to 27.2.1
         script: |
           set -ex
-          ls -la
-          xcodebuild -list -project ThreeOneOSFive.xcodeproj
+          xcodebuild -list -project ThreeOneOSFive.xcodeproj -json > list.json
+          cat list.json
+          SCHEME=$(python3 -c "import json; d=json.load(open('list.json')); print(d['project']['schemes'][0])")
+          echo "SCHEME: $SCHEME"
           xcodebuild -project ThreeOneOSFive.xcodeproj \
+            -scheme "$SCHEME" \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath ./DerivedData \
