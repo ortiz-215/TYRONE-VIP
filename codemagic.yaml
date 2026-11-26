@@ -11,17 +11,21 @@ workflows:
         script: |
           set -ex
           ls -la
+          xcodebuild -list -project ThreeOneOSFive.xcodeproj
           xcodebuild -project ThreeOneOSFive.xcodeproj \
+            -scheme ThreeOneOSFive \
             -configuration Release \
             -sdk iphoneos \
+            -derivedDataPath ./DerivedData \
             -destination "generic/platform=iOS" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
+            IPHONEOS_DEPLOYMENT_TARGET=16.0 \
             build
-          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
+          ls -R ./DerivedData/Build/Products/Release-iphoneos/
+          APP_PATH=$(find ./DerivedData/Build/Products/Release-iphoneos -name "*.app" | head -n 1)
           echo "APP: $APP_PATH"
-          ls -lh "$APP_PATH"
           rm -rf Payload ThreeOneOSFive-27.2.1.ipa
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
