@@ -1,19 +1,47 @@
 workflows:
   ios-27-2-1-unsigned:
-    name: iOS 27.2.1 Unsigned
+    name: iOS 16.0 to 27.2.1 - 24B156
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
       xcode: 27.2
       cocoapods: default
     scripts:
-      - name: Build Unsigned IPA 16.0 to 27.2.1
+      - name: Extend Range 16.0 to 27.2.1 + Build
         script: |
           set -ex
+          python3 - << 'PY'
+          import pathlib
+          patched = 0
+          for p in pathlib.Path('.').rglob('*.swift'):
+              try:
+                  t = p.read_text(errors='ignore')
+              except: continue
+              orig = t
+              # 1. Sube el limite maximo de 27.2 a 27.2.1
+              # Si hay un "27.2" como tope, lo deja en 27.2.1
+              if '27.2' in t and '27.2.1' not in t:
+                  # Solo donde es version maxima / supported
+                  t = t.replace('"27.2"', '"27.2.1"')
+                  t = t.replace("'27.2'", "'27.2.1'")
+                  t = t.replace('27.2"', '27.2.1"')
+                  print(f"PATCH MAX VERSION -> {p}")
+              # 2. Agrega el build exacto de tu iPhone 13: 24B156
+              if '24A5398f' in t:
+                  t = t.replace('24A5398f', '24A5398f", "24B156')
+                  print(f"PATCH BUILD 24B156 -> {p}")
+              # 3. Si hay una lista de versiones soportadas, agrega 27.2.1
+              if '27.2' in t and 'supported' in t.lower():
+                  t = t.replace('27.2', '27.2, 27.2.1')
+                  print(f"PATCH LISTA -> {p}")
+              if t != orig:
+                  p.write_text(t)
+                  patched += 1
+          print(f"TOTAL PATCHED: {patched}")
+          print("RANGO FINAL: 16.0 hasta 27.2.1 (24B156)")
+          PY
           xcodebuild -list -project ThreeOneOSFive.xcodeproj -json > list.json
-          cat list.json
           SCHEME=$(python3 -c "import json; d=json.load(open('list.json')); print(d['project']['schemes'][0])")
-          echo "SCHEME: $SCHEME"
           xcodebuild -project ThreeOneOSFive.xcodeproj \
             -scheme "$SCHEME" \
             -configuration Release \
@@ -26,11 +54,10 @@ workflows:
             IPHONEOS_DEPLOYMENT_TARGET=16.0 \
             build
           APP_PATH=$(find ./DerivedData/Build/Products/Release-iphoneos -name "*.app" | head -n 1)
-          echo "APP: $APP_PATH"
-          rm -rf Payload ThreeOneOSFive-27.2.1.ipa
+          rm -rf Payload ThreeOneOSFive-16.0-to-27.2.1.ipa
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
-          zip -r ThreeOneOSFive-27.2.1.ipa Payload
+          zip -r ThreeOneOSFive-16.0-to-27.2.1.ipa Payload
           ls -lh *.ipa
     artifacts:
-      - ThreeOneOSFive-27.2.1.ipa
+      - ThreeOneOSFive-16.0-to-27.2.1.ipa
