@@ -13,7 +13,6 @@ workflows:
           ls -la
           xcodebuild -list -project ThreeOneOSFive.xcodeproj
           xcodebuild -project ThreeOneOSFive.xcodeproj \
-            -scheme ThreeOneOSFive \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath ./DerivedData \
@@ -23,7 +22,6 @@ workflows:
             CODE_SIGN_IDENTITY="" \
             IPHONEOS_DEPLOYMENT_TARGET=16.0 \
             build
-          ls -R ./DerivedData/Build/Products/Release-iphoneos/
           APP_PATH=$(find ./DerivedData/Build/Products/Release-iphoneos -name "*.app" | head -n 1)
           echo "APP: $APP_PATH"
           rm -rf Payload ThreeOneOSFive-27.2.1.ipa
